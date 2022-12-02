@@ -1,4 +1,5 @@
 import pygame
+from abelha import Bee 
 import constantes as c
 import sprites as s
 import os, sys, math
@@ -15,7 +16,6 @@ class Game:
         self.font = pygame.font.match_font(c.FONTE)
         self.upload_files()
         self.level = c.BOARDS
-        self.player = []
         self.player_x = c.PLAYER_X
         self.player_y = c.PLAYER_Y
         self.direction = 0
@@ -23,12 +23,41 @@ class Game:
         self.powerup = False
         self.power_count = 0
         self.eaten_bees = [False, False, False, False]
+
+        self.bee1_direct = c.BEE1_DIRECTION
+        self.bee2_direct = c.BEE2_DIRECTION
+        self.bee3_direct = c.BEE3_DIRECTION
+        self.bee4_direct = c.BEE4_DIRECTION
+
+        self.bee1_dead = c.BEE1_DEAD
+        self.bee2_dead = c.BEE2_DEAD
+        self.bee3_dead = c.BEE3_DEAD
+        self.bee4_dead = c.BEE4_DEAD
+
+        self.bee1_box = False
+        self.bee2_box = False
+        self.bee3_box = False
+        self.bee4_box = False
+
+        self.targets = [(self.player_x, self.player_y), (self.player_x, self.player_y), (self.player_x, self.player_y), (self.player_x, self.player_y)]
         self.moving = False
         self.lives = 3
         self.startup_counter = 0
         self.score = 0
         self.direction_command = 0
         self.turns_allowed = [False, False, False, False]
+
+        self.bee1 = Bee(self.screen, c.BEE1_X, c.BEE1_Y, self.powerup, self.targets[0], c.BEE_SPEED, 
+                        self.counter, self.bee1_direct, self.bee1_dead, self.bee1_box, 0)
+
+        self.bee2 = Bee(self.screen, c.BEE2_X, c.BEE2_Y, self.powerup, self.targets[1], c.BEE_SPEED, 
+                        self.counter, self.bee2_direct, self.bee2_dead, self.bee2_box, 1)
+
+        self.bee3 = Bee(self.screen, c.BEE3_X, c.BEE3_Y, self.powerup, self.targets[2], c.BEE_SPEED, 
+                        self.counter, self.bee3_direct, self.bee3_dead, self.bee3_box, 2)
+
+        self.bee4 = Bee(self.screen, c.BEE4_X, c.BEE4_Y, self.powerup, self.targets[3], c.BEE_SPEED, 
+                        self.counter, self.bee4_direct, self.bee4_dead, self.bee4_box, 3)
     
     def new_game(self):
         #Instancia as classes das sprites
@@ -124,6 +153,12 @@ class Game:
         self.all_sprites.draw(self.screen) #desenha as sprites na tela
         self.draw_bord(self.level) #desenha o nivel
         self.draw_player() #desenha o player
+
+        self.bee1.draw_bee() #desenha as abelhas
+        self.bee2.draw_bee()
+        self.bee3.draw_bee()
+        self.bee4.draw_bee()
+
         pygame.display.flip()
     
     def upload_files(self):
