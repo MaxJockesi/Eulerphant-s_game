@@ -52,8 +52,8 @@ class Game:
             exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
             exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
             exec(f'self.bee{i}_box = False')
-            exec(f'self.bee{i} = Bee(self.screen, c.BEE{i}_X, c.BEE{i}_Y,self.powerup, self.targets[{i} - 1],  \
-                 c.BEE_SPEED, self.counter, self.bee{i}_direct, self.bee{i}_dead, self.bee{i}_box, {i} - 1)')
+            exec(f'self.bee{i} = Bee(self.screen, c.BEE{i}_X, c.BEE{i}_Y, self.targets[{i} - 1],  \
+                 c.BEE_SPEED, self.bee{i}_direct, self.bee{i}_box, {i} - 1)')
         
     
     def new_game(self):
@@ -65,7 +65,7 @@ class Game:
         None.
 
         """
-        self.all_sprites = pygame.sprite.Group()
+
         self.run()
     
     def run(self):
@@ -120,7 +120,6 @@ class Game:
             elif self.player_x < -40:
                 self.player_x = (c.LARGURA - 3)
             
-            self.update_sprites()
             self.plot_sprites()
     
     def events(self):
@@ -162,17 +161,6 @@ class Game:
                 elif event.key == pygame.K_LEFT and self.direction_command == 1:
                     self.direction_command = self.direction
     
-    def update_sprites(self):
-        """
-        Função que atualiza as sprites conforme o passar do tempo.
-
-        Returns
-        -------
-        None.
-
-        """
-        self.all_sprites.update()
-    
     def plot_sprites(self):
         """
         Função que coloca as sprites do jogador, do nível e dos adversários
@@ -184,13 +172,12 @@ class Game:
 
         """
         self.screen.fill(c.PRETO) #limpa a tela
-        self.all_sprites.draw(self.screen) #desenha as sprites na tela
         self.draw_bord(self.level) #desenha o nivel
         self.draw_player() #desenha o player
         
         #Desenha as abelhas
         for i in range(1,5):
-            exec(f'self.bee{i}.draw_bee()')
+            exec(f'self.bee{i}.draw_bee(self.powerup, self.counter, self.eaten_bees, self.bee{i}_dead)')
 
         pygame.display.flip()
     

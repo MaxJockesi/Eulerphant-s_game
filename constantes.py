@@ -17,13 +17,17 @@ PLAYER_SPEED = 2
 #AB'
 for i in range (1,5):
     exec(f'BEE{i}_X = LARGURA//2 - 15 ')
-    exec(f'BEE{i}_Y = 240')
+    exec(f'BEE{i}_Y = 218')
     exec(f'BEE{i}_DIRECTION = 2')
     exec(f'BEE{i}_DEAD = False')
     
 BEE1_Y = 186
 BEE1_DIRECTION = 0
 BEE1_DEAD = False
+
+BEE4_Y = 248
+BEE4_DIRECTION = 0
+BEE4_DEAD = False
 
 
 BEE_SPEED = 2
@@ -35,7 +39,7 @@ TITULO_JOGO = "EULERPHANT"
 FPS = 30
 
 #cores
-PRETO = (0, 0, 0)
+PRETO = (10, 10, 10)
 AMARELO = (244, 233, 51)
 BRANCO = (255, 255, 255)
 AZUL = (0, 0, 255)
