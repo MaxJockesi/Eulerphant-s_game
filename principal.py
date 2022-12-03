@@ -6,38 +6,41 @@ import os, sys, math
 
 class Game:
     def __init__(self):
-        #criando a tela do jogo
+        """
+        Função que inicia e declara as constantes do jogo, criando a tela e
+        dispondo os personagens e parâmetros.
+
+        Returns
+        -------
+        None.
+
+        """
         pygame.init()
         pygame.mixer.init()
         self.screen = pygame.display.set_mode((c.LARGURA, c.ALTURA))
         pygame.display.set_caption(c.TITULO_JOGO)
+        
         self.clock = pygame.time.Clock()
         self.is_running = True
+        
         self.font = pygame.font.match_font(c.FONTE)
         self.upload_files()
         self.level = c.BOARDS
+        
         self.player_x = c.PLAYER_X
         self.player_y = c.PLAYER_Y
+        
         self.direction = 0
         self.counter = 0
         self.powerup = False
         self.power_count = 0
         self.eaten_bees = [False, False, False, False]
-
-        self.bee1_direct = c.BEE1_DIRECTION
-        self.bee2_direct = c.BEE2_DIRECTION
-        self.bee3_direct = c.BEE3_DIRECTION
-        self.bee4_direct = c.BEE4_DIRECTION
-
-        self.bee1_dead = c.BEE1_DEAD
-        self.bee2_dead = c.BEE2_DEAD
-        self.bee3_dead = c.BEE3_DEAD
-        self.bee4_dead = c.BEE4_DEAD
-
-        self.bee1_box = False
-        self.bee2_box = False
-        self.bee3_box = False
-        self.bee4_box = False
+        
+        for i in range(1,5):
+            exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
+            exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
+            exec(f'self.bee{i}_box = False')
+    
 
         self.targets = [(self.player_x, self.player_y), (self.player_x, self.player_y), (self.player_x, self.player_y), (self.player_x, self.player_y)]
         self.moving = False
@@ -47,25 +50,32 @@ class Game:
         self.direction_command = 0
         self.turns_allowed = [False, False, False, False]
 
-        self.bee1 = Bee(self.screen, c.BEE1_X, c.BEE1_Y, self.powerup, self.targets[0], c.BEE_SPEED, 
-                        self.counter, self.bee1_direct, self.bee1_dead, self.bee1_box, 0)
-
-        self.bee2 = Bee(self.screen, c.BEE2_X, c.BEE2_Y, self.powerup, self.targets[1], c.BEE_SPEED, 
-                        self.counter, self.bee2_direct, self.bee2_dead, self.bee2_box, 1)
-
-        self.bee3 = Bee(self.screen, c.BEE3_X, c.BEE3_Y, self.powerup, self.targets[2], c.BEE_SPEED, 
-                        self.counter, self.bee3_direct, self.bee3_dead, self.bee3_box, 2)
-
-        self.bee4 = Bee(self.screen, c.BEE4_X, c.BEE4_Y, self.powerup, self.targets[3], c.BEE_SPEED, 
-                        self.counter, self.bee4_direct, self.bee4_dead, self.bee4_box, 3)
+        for i in range(1,5):
+            exec(f'self.bee{i} = Bee(self.screen, c.BEE{i}_X, c.BEE{i}_Y,self.powerup, self.targets[{i} - 1],  \
+                 c.BEE_SPEED, self.counter, self.bee{i}_direct, self.bee{i}_dead, self.bee{i}_box, {i} - 1)')
+        
     
     def new_game(self):
-        #Instancia as classes das sprites
+        """
+        Função que instancia as sprites do jogo.
+
+        Returns
+        -------
+        None.
+
+        """
         self.all_sprites = pygame.sprite.Group()
         self.run()
     
     def run(self):
-        #loop do jogo
+        """
+        Função que determina a dinâmica temporal do jogo.
+
+        Returns
+        -------
+        None.
+
+        """
         self.playing = True
         self.flicker = False
         while self.playing:
@@ -144,20 +154,34 @@ class Game:
                     self.direction_command = self.direction
     
     def update_sprites(self):
-        #atualiza os sprites
+        """
+        Função que atualiza as sprites conforme o passar do tempo.
+
+        Returns
+        -------
+        None.
+
+        """
         self.all_sprites.update()
     
     def plot_sprites(self):
-        #desenha as sprites
+        """
+        Função que coloca as sprites do jogador, do nível e dos adversários
+        na tela.
+
+        Returns
+        -------
+        None.
+
+        """
         self.screen.fill(c.PRETO) #limpa a tela
         self.all_sprites.draw(self.screen) #desenha as sprites na tela
         self.draw_bord(self.level) #desenha o nivel
         self.draw_player() #desenha o player
-
-        self.bee1.draw_bee() #desenha as abelhas
-        self.bee2.draw_bee()
-        self.bee3.draw_bee()
-        self.bee4.draw_bee()
+        
+        #Desenha as abelhas
+        for i in range(1,5):
+            exec(f'self.bee{i}.draw_bee()')
 
         pygame.display.flip()
     
@@ -245,7 +269,14 @@ class Game:
                     pygame.mixer.Sound(os.path.join(self.audiodir, c.START_KEY)).play()
     
     def show_game_over(self):
+        """
+        Função que gera a tela de game over.
 
+        Returns
+        -------
+        None.
+
+        """
         self.screen.fill(c.PRETO) 
 
         self.show_text(
@@ -268,6 +299,20 @@ class Game:
         self.wait_command()
     
     def draw_bord(self, lvl):
+        """
+        Função que recebe uma matriz que representa o nível e o gera na tela.
+
+        Parameters
+        ----------
+        lvl : list
+            Matriz de inteiros em que cada inteiro corresponde a um desenho na
+            tela.
+
+        Returns
+        -------
+        None.
+
+        """
         num1 = c.ALTURA_1
         num2 = c.LARGURA_1
         color = c.AZUL
