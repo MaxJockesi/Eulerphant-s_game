@@ -34,23 +34,24 @@ class Game:
         self.counter = 0
         self.powerup = False
         self.power_count = 0
-        self.eaten_bees = [False, False, False, False]
         
-        for i in range(1,5):
-            exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
-            exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
-            exec(f'self.bee{i}_box = False')
-    
-
-        self.targets = [(self.player_x, self.player_y), (self.player_x, self.player_y), (self.player_x, self.player_y), (self.player_x, self.player_y)]
+        self.eaten_bees = []
+        self.targets = []
+        self.turns_allowed = []
+        
         self.moving = False
         self.lives = 3
         self.startup_counter = 0
         self.score = 0
         self.direction_command = 0
-        self.turns_allowed = [False, False, False, False]
-
+        
         for i in range(1,5):
+            self.targets.append((self.player_x, self.player_y))
+            self.eaten_bees.append(False)
+            self.turns_allowed.append(False)
+            exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
+            exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
+            exec(f'self.bee{i}_box = False')
             exec(f'self.bee{i} = Bee(self.screen, c.BEE{i}_X, c.BEE{i}_Y,self.powerup, self.targets[{i} - 1],  \
                  c.BEE_SPEED, self.counter, self.bee{i}_direct, self.bee{i}_dead, self.bee{i}_box, {i} - 1)')
         
@@ -123,7 +124,15 @@ class Game:
             self.plot_sprites()
     
     def events(self):
-        #define eventos do jogo
+        """
+        Função que define os eventos de movimento do jogador e quando sair do
+        jogo.
+
+        Returns
+        -------
+        None.
+
+        """
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -186,7 +195,14 @@ class Game:
         pygame.display.flip()
     
     def upload_files(self):
-        #carrega os arquivis de audio e imagens
+        """
+        Função que carrega os áudios e imagens necessários para o jogo.
+
+        Returns
+        -------
+        None.
+
+        """
         imagesdir = os.path.join(os.getcwd(), "imagens")
         self.audiodir = os.path.join(os.getcwd(), "audios")
         self.spritesheet = os.path.join(imagesdir, c.SPRITESHEET)
@@ -194,7 +210,27 @@ class Game:
         self.start_logo = pygame.image.load(self.start_logo).convert()
 
     def show_text(self, txt, size, color, x, y):
-        #exibe um texto na tela do jogo
+        """
+        Função que mostra um texto do jogo na tela.
+
+        Parameters
+        ----------
+        txt : string
+            Texto a ser exibido.
+        size : int
+            Tamanho do texto a ser exibido(em pixels).
+        color : tuple
+            Tupla de 3 inteiros que representa uma cor na combinação RGB.
+        x : int
+            representa em que posição na coordenada x o texto deve ser colocado.
+        y : int
+            representa em que posição na coordenada y o texto deve ser colocado.
+
+        Returns
+        -------
+        None.
+
+        """
         font = pygame.font.Font(self.font, size)
         text = font.render(txt, False, color)
         text_rect = text.get_rect()
@@ -202,11 +238,34 @@ class Game:
         self.screen.blit(text, text_rect)
     
     def show_logo(self, x, y):
+        """
+        Gera o logo do jogo.
+
+        Parameters
+        ----------
+        x : int
+            Coordenada x do logo.
+        y : int
+            Coordenada y do logo.
+
+        Returns
+        -------
+        None.
+
+        """
         start_logo_rect = self.start_logo.get_rect()
         start_logo_rect.midtop = (x, y)
         self.screen.blit(self.start_logo, start_logo_rect)
 
     def show_menu(self):
+        """
+        Gera o menu de Eulerphant's game.
+
+        Returns
+        -------
+        None.
+
+        """
 
         pygame.mixer.music.load(os.path.join(self.audiodir, c.MUSIC_START))
         pygame.mixer.music.play()
@@ -233,6 +292,14 @@ class Game:
         self.wait_command()
     
     def show_pause(self):
+        """
+        Gera a tela de pausa do jogo.
+
+        Returns
+        -------
+        None.
+
+        """
 
         self.screen.fill(c.PRETO) 
 
@@ -256,6 +323,14 @@ class Game:
         self.wait_command()
 
     def wait_command(self):
+        """
+        Função auxiliar para eventos do pygame.
+
+        Returns
+        -------
+        None.
+
+        """
         waiting = True
         while waiting:
             self.clock.tick(c.FPS)
@@ -341,6 +416,14 @@ class Game:
                     pygame.draw.line(self.screen, c.BRANCO, (j * num2, i * num1 + (0.5 * num1)), (j * num2 + num2, i * num1 + (0.5 * num1)), 2)
 
     def draw_player(self):
+        """
+        Muda a posição da imagem do jogador caso ele mude de direção.
+
+        Returns
+        -------
+        None.
+
+        """
         # 0 = direita, 1 = esquerda, 2 = cima, 3 = baixo
 
         if self.direction == 0:
@@ -353,7 +436,23 @@ class Game:
             self.screen.blit(pygame.transform.rotate(s.PLAYER_IMAGES[self.counter // 5], 90), (self.player_x, self.player_y))
 
     def check_position(self, playerx, playery):
+        """
+        Função que verifica onde é permitido o elefante jogar, dependendo da
+        atual posição.
 
+        Parameters
+        ----------
+        playerx : int
+            Coordenada x atual do jogador.
+        playery : int
+            Coordenada y atual do jogador.
+
+        Returns
+        -------
+        turns : list
+            Lista de booleanos que indica por qual direção o jogador pode andar.
+
+        """
         turns = [False, False, False, False]
         centerx = playerx + 15
         centery = playery + 15
@@ -409,7 +508,24 @@ class Game:
         return turns
 
     def move_player(self, playerx, playery):
-        # r, l , u, d
+        """
+        Função que move para onde o jogador queira, se possível.
+
+        Parameters
+        ----------
+        playerx : int
+            Coordenada x atual do jogador.
+        playery : int
+            Coordenada y atual do jogador.
+
+        Returns
+        -------
+        playerx : int
+            Nova coordenada x do jogador.
+        playery : int
+            Nova coordenada y do jogador.
+
+        """
 
         if self.direction == 0 and self.turns_allowed[0]:
             playerx += c.PLAYER_SPEED
@@ -423,7 +539,21 @@ class Game:
         return playerx, playery
 
     def check_collisions(self, score):
+        """
+        Atualiza o score a depender das colisões do jogador com outrem. Também
+        muda o centro de colisões do jogador conforme ele anda.
+        
+        Parameters
+        ----------
+        score : int
+            Score atual.
 
+        Returns
+        -------
+        score: int
+            Novo score.
+
+        """
         centerx = self.player_x + 15
         centery = self.player_y + 15
 
@@ -443,7 +573,14 @@ class Game:
         return score
 
     def draw_misc(self):
+        """
+        Função que desenha outros detalhes da tela (score, vida).
 
+        Returns
+        -------
+        None.
+
+        """
         self.show_text(
             f'Score: {self.score:07}', 
             16,
