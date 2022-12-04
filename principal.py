@@ -268,7 +268,7 @@ class Game:
         )        
         
         self.show_text(
-            "Desenvolvido por Fernando, Max, Ester e Miguel", 
+            "Desenvolvido por Fernando, Max, Esther e Miguel", 
             16, 
             c.BRANCO, 
             c.LARGURA/2, 
@@ -443,48 +443,60 @@ class Game:
         turns = [False, False, False, False]
         centerx = playerx + 15
         centery = playery + 15
-        num1 = 16
-        num2 = 16
-        num3 = 9
+        num1 = c.ALTURA_1
+        num2 = c.LARGURA_1
+        num3 = c.NORMALIZACAO
 
+        centery1 = math.floor(centery / num1)
+        centery1_minus = math.floor((centery - num1) / num1)
+        centery1_plus = math.floor((centery + num1) / num1)
+        centery3_plus = math.floor((centery + num3) / num1)
+        centery3_minus = math.floor((centery - num3) / num1)
+        
+        centerx2 = math.floor(centerx / num2)
+        centerx2_plus = math.floor((centerx + num2) / num2)
+        centerx2_minus = math.floor((centerx - num2) / num2)
+        centerx3_minus = math.floor((centerx - num3) / num2)
+        centerx3_plus = math.floor((centerx + num3) / num2)
+        
         if centerx // 30 < 15:
             if self.direction == 0:
-                if self.level[math.floor(centery / num1)][math.floor((centerx - num3) / num2)] < 3:
+                if self.level[centery1][centerx3_minus] < 3:
                     turns[1] = True
             if self.direction == 1:
-                if self.level[math.floor(centery / num1)][math.floor((centerx + num3) / num2)] < 3:
+                if self.level[centery1][centerx3_plus] < 3:
                     turns[0] = True
             if self.direction == 2:
-                if self.level[math.floor((centery + num3) / num1)][math.floor(centerx / num2)] < 3:
+                if self.level[centery3_plus][centerx2] < 3:
                     turns[3] = True
             if self.direction == 3:
-                if self.level[math.floor((centery - num3) / num1)][math.floor(centerx / num2)] < 3:
+                if self.level[centery3_minus][centerx2] < 3:
                     turns[2] = True
             
             if self.direction == 2 or self.direction == 3:
                 if 7 <= centerx % num2 <= 10:
-                    if self.level[math.floor((centery + num3) / num1)][math.floor(centerx / num2)] < 3:
+                    if self.level[centery3_plus][centerx2] < 3:
                         turns[3] = True
-                    if self.level[math.floor((centery - num3) / num1)][math.floor(centerx / num2)] < 3:
+                    if self.level[centery3_minus][centerx2] < 3:
                         turns[2] = True
 
                 if 7 <= centery % num1 <= 10:
-                    if self.level[math.floor(centery / num1)][math.floor((centerx - num2) / num2)] < 3:
+                    if self.level[centery1][centerx2_minus] < 3:
                         turns[1] = True
-                    if self.level[math.floor(centery / num1)][math.floor((centerx + num2) / num2)] < 3:
+                    if self.level[centery1][centerx2_plus] < 3:
                         turns[0] = True
             
             if self.direction == 0 or self.direction == 1:
                 if 7 <= centerx % num2 <= 10:
-                    if self.level[math.floor((centery + num1) / num1)][math.floor(centerx / num2)] < 3:
+                    if self.level[centery1_plus][centerx2] < 3:
                         turns[3] = True
-                    if self.level[math.floor((centery - num1) / num1)][math.floor(centerx / num2)] < 3:
+                    if self.level[centery1_minus][centerx2] < 3:
                         turns[2] = True
 
                 if 7 <= centery % num1 <= 10:
-                    if self.level[math.floor(centery / num1)][math.floor((centerx - num3) / num2)] < 3:
+                    if self.level[centery1][centerx3_minus] < 3:
                         turns[1] = True
-                    if self.level[math.floor(centery / num1)][math.floor((centerx + num3) / num2)] < 3:
+                    if self.level[centery1][centerx3_plus] < 3:
                         turns[0] = True
                 
 
