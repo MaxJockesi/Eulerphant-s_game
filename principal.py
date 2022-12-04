@@ -50,12 +50,14 @@ class Game:
             self.eaten_bees.append(False)
             self.turns_allowed.append(False)
             exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
+            exec(f'self.bee{i}_x = c.BEE{i}_X')
+            exec(f'self.bee{i}_y = c.BEE{i}_Y')
+            exec(f'self.bee{i}_turns = [False, False, False, False]')
             exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
             exec(f'self.bee{i}_box = False')
-            exec(f'self.bee{i} = Bee(self.screen, c.BEE{i}_X, c.BEE{i}_Y, self.targets[{i} - 1],  \
+            exec(f'self.bee{i} = Bee(self.screen, self.level, c.BEE{i}_X, c.BEE{i}_Y, self.targets[{i} - 1],  \
                  c.BEE_SPEED, self.bee{i}_direct, self.bee{i}_box, {i} - 1)')
         
-    
     def new_game(self):
         """
         Função que instancia as sprites do jogo.
@@ -104,9 +106,16 @@ class Game:
                 self.moving = True
             
             self.turns_allowed = self.check_position(self.player_x, self.player_y)
+
+            for i in range(1,5):  
+                exec(f'self.bee{i}_turns, self.bee{i}_inbox = self.bee{i}.check_collisions(self.level)')
             
             if self.moving:
                 self.player_x, self.player_y = self.move_player(self.player_x, self.player_y)
+                
+                for i in range(1,5):
+                    exec(f'self.bee{i}_x, self.bee{i}_y, self.bee{i}_direct = self.bee{i}.move_{i}(self.targets[{i - 1}], self.bee{i}_turns)')
+
 
             self.score = self.check_collisions(self.score)
             self.events()
@@ -160,6 +169,7 @@ class Game:
                     self.direction_command = self.direction
                 elif event.key == pygame.K_LEFT and self.direction_command == 1:
                     self.direction_command = self.direction
+
     
     def plot_sprites(self):
         """
@@ -177,7 +187,7 @@ class Game:
         
         #Desenha as abelhas
         for i in range(1,5):
-            exec(f'self.bee{i}.draw_bee(self.powerup, self.counter, self.eaten_bees, self.bee{i}_dead)')
+            exec(f'self.bee{i}.draw_bee(self.bee{i}_x, self.bee{i}_y, self.powerup, self.counter, self.eaten_bees, self.bee{i}_dead)')
 
         pygame.display.flip()
     
