@@ -2,7 +2,7 @@ import pygame
 from abelha import Bee 
 import constantes as c
 import sprites as s
-import os, sys, math
+import os, sys, math, copy
 
 class Game:
     def __init__(self):
@@ -25,7 +25,7 @@ class Game:
         
         self.font = pygame.font.match_font(c.FONTE)
         self.upload_files()
-        self.level = c.BOARDS
+        self.level = copy.deepcopy(c.BOARDS)
         
         self.player_x = c.PLAYER_X
         self.player_y = c.PLAYER_Y
@@ -38,25 +38,29 @@ class Game:
         self.eaten_bees = []
         self.targets = []
         self.turns_allowed = []
+        self.bee_speeds = []
         
         self.moving = False
         self.lives = 3
         self.startup_counter = 0
         self.score = 0
         self.direction_command = 0
+        self.game_over = False
+        self.game_won = False
         
         for i in range(1,5):
             self.targets.append((self.player_x, self.player_y))
             self.eaten_bees.append(False)
-            self.turns_allowed.append(False)
+            self.turns_allowed.append(False) 
+            self.bee_speeds.append(c.BEE_SPEED)
             exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
             exec(f'self.bee{i}_x = c.BEE{i}_X')
-            exec(f'self.bee{i}_y = c.BEE{i}_Y')
+            exec(f'self.bee{i}_y = c.BEE{i}_Y') 
             exec(f'self.bee{i}_turns = [False, False, False, False]')
             exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
             exec(f'self.bee{i}_box = False')
             exec(f'self.bee{i} = Bee(self.screen, self.level, c.BEE{i}_X, c.BEE{i}_Y, self.targets[{i} - 1],  \
-                 c.BEE_SPEED, self.bee{i}_direct, self.bee{i}_box, {i} - 1)')
+                 self.bee_speeds[{i - 1}], self.bee{i}_direct, self.bee{i}_box, {i} - 1)')
         
     def new_game(self):
         """
@@ -95,29 +99,245 @@ class Game:
             if self.powerup and self.power_count < 300:
                 self.power_count += 1
             elif self.powerup and self.power_count >= 300:
+
+                pygame.mixer.music.stop()
                 self.power_count = 0
                 self.powerup = False
                 self.eaten_bees = [False, False, False, False]
             
-            if self.startup_counter < 90:
+            if self.startup_counter < 90 and not self.game_over and not self.game_won:
                 self.moving = False
                 self.startup_counter += 1
             else:
                 self.moving = True
             
+            if self.powerup:
+                self.bee_speeds = [1, 1, 1, 1]
+            else:
+                self.bee_speeds = [2, 2, 2, 2]
+
+            if self.bee1.dead:
+                self.bee_speeds[0] = 4
+            if self.bee2.dead:
+                self.bee_speeds[1] = 4
+            if self.bee3.dead:
+                self.bee_speeds[2] = 4
+            if self.bee4.dead:
+                self.bee_speeds[3] = 4
+
+            self.game_won = True
+            for i in range(len(self.level)):
+                if 1 in self.level[i] or 2 in self.level[i]:
+                    self.game_won = False
+
             self.turns_allowed = self.check_position(self.player_x, self.player_y)
 
-            for i in range(1,5):  
-                exec(f'self.bee{i}_turns, self.bee{i}_inbox = self.bee{i}.check_collisions(self.level)')
-            
+            self.bee1_turns, self.bee1_box = self.bee1.check_collisions(self.level, self.bee1_x, self.bee1_y, self.bee_speeds[0])
+            self.bee2_turns, self.bee2_box = self.bee2.check_collisions(self.level, self.bee2_x, self.bee2_y, self.bee_speeds[1])
+            self.bee3_turns, self.bee3_box = self.bee3.check_collisions(self.level, self.bee3_x, self.bee3_y, self.bee_speeds[2])
+            self.bee4_turns, self.bee4_box = self.bee4.check_collisions(self.level, self.bee4_x, self.bee4_y, self.bee_speeds[3])
+
+            self.bee1_rect = self.bee1.get_rect(self.bee1_x, self.bee1_y)
+            self.bee2_rect = self.bee2.get_rect(self.bee2_x, self.bee2_y)
+            self.bee3_rect = self.bee3.get_rect(self.bee3_x, self.bee3_y)
+            self.bee4_rect = self.bee4.get_rect(self.bee4_x, self.bee4_y)
+
             if self.moving:
                 self.player_x, self.player_y = self.move_player(self.player_x, self.player_y)
                 
-                for i in range(1,5):
-                    exec(f'self.bee{i}_x, self.bee{i}_y, self.bee{i}_direct = self.bee{i}.move_{i}(self.targets[{i - 1}], self.bee{i}_turns)')
+                if not self.bee1.dead and not self.bee1_box:
+                    self.bee1_x, self.bee1_y, self.bee1_direct = self.bee1.move_1(self.targets[0], self.bee1_turns)
+                elif self.bee1.dead and not self.bee1_box:
+                    self.bee1_x, self.bee1_y, self.bee1_direct = self.bee1.move_1(self.targets[0], self.bee1_turns)
+                elif self.bee1_box and not self.bee1.dead:
+                    self.bee1_x, self.bee1_y, self.bee1_direct = self.bee1.move_1(self.targets[0], self.bee1_turns)
 
+                if not self.bee2.dead and not self.bee2_box: 
+                    self.bee2_x, self.bee2_y, self.bee2_direct = self.bee2.move_2(self.targets[1], self.bee2_turns)
+                elif self.bee2.dead and not self.bee2_box:
+                    self.bee2_x, self.bee2_y, self.bee2_direct = self.bee2.move_1(self.targets[1], self.bee2_turns)
+                elif self.bee2_box and not self.bee2.dead:
+                    self.bee2_x, self.bee2_y, self.bee2_direct = self.bee2.move_1(self.targets[1], self.bee2_turns)
+
+                if not self.bee3.dead and not self.bee3_box:
+                    self.bee3_x, self.bee3_y, self.bee3_direct = self.bee3.move_3(self.targets[2], self.bee3_turns)
+                elif self.bee3.dead and not self.bee3_box:
+                    self.bee3_x, self.bee3_y, self.bee3_direct = self.bee3.move_1(self.targets[2], self.bee3_turns)
+                elif self.bee3_box and not self.bee3.dead:
+                    self.bee3_x, self.bee3_y, self.bee3_direct = self.bee3.move_1(self.targets[2], self.bee3_turns)
+
+                if not self.bee4.dead and not self.bee4_box:
+                    self.bee4_x, self.bee4_y, self.bee4_direct = self.bee4.move_4(self.targets[3], self.bee4_turns)
+                elif self.bee4.dead and not self.bee4_box:
+                    self.bee4_x, self.bee4_y, self.bee4_direct = self.bee4.move_1(self.targets[3], self.bee4_turns)
+                elif self.bee4_box and not self.bee4.dead:
+                    self.bee4_x, self.bee4_y, self.bee4_direct = self.bee4.move_1(self.targets[3], self.bee4_turns)
 
             self.score = self.check_collisions(self.score)
+            self.targets = self.get_target()
+            self.plot_sprites()
+
+            if not self.powerup:
+                if (self.player_hitbox.colliderect(self.bee1_rect) and not self.bee1.dead) or \
+                    (self.player_hitbox.colliderect(self.bee2_rect) and not self.bee2.dead) or \
+                    (self.player_hitbox.colliderect(self.bee3_rect) and not self.bee3.dead) or \
+                    (self.player_hitbox.colliderect(self.bee4_rect) and not self.bee4.dead):
+
+                    if self.lives > 0:
+                        pygame.mixer.music.stop()
+                        pygame.mixer.Sound(os.path.join(self.audiodir, c.MUSIC_LOSE_LIFE)).play()
+                        self.lives -= 1
+                        self.startup_counter = 0
+
+                        self.player_x = c.PLAYER_X
+                        self.player_y = c.PLAYER_Y
+                        self.direction = 0
+                        self.direction_command = 0
+                        self.powerup = False
+                        self.power_count = 0
+
+                        self.eaten_bees = [False, False, False, False]
+
+                        for i in range(1,5):
+                            exec(f'self.bee{i}_x = c.BEE{i}_X')
+                            exec(f'self.bee{i}_y = c.BEE{i}_Y')
+                            exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
+                            exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
+
+                    else:
+                        self.moving = False
+                        self.game_over = True
+                        self.startup_counter = 0
+
+            if self.powerup and self.player_hitbox.colliderect(self.bee1_rect) and self.eaten_bees[0] and not self.bee1.dead:
+                if self.lives > 0:
+                    pygame.mixer.music.stop()
+                    pygame.mixer.Sound(os.path.join(self.audiodir, c.MUSIC_LOSE_LIFE)).play()
+                    self.lives -= 1
+                    self.startup_counter = 0
+
+                    self.player_x = c.PLAYER_X
+                    self.player_y = c.PLAYER_Y
+                    self.direction = 0
+                    self.direction_command = 0
+                    self.powerup = False
+                    self.power_count = 0
+
+                    self.eaten_bees = [False, False, False, False]
+
+                    for i in range(1,5):
+                        exec(f'self.bee{i}_x = c.BEE{i}_X')
+                        exec(f'self.bee{i}_y = c.BEE{i}_Y')
+                        exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
+                        exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
+                
+                else:
+                        self.moving = False
+                        self.game_over = True
+                        self.startup_counter = 0
+        
+            if self.powerup and self.player_hitbox.colliderect(self.bee2_rect) and self.eaten_bees[1] and not self.bee2.dead:
+                if self.lives > 0:
+                    pygame.mixer.music.stop()
+                    pygame.mixer.Sound(os.path.join(self.audiodir, c.MUSIC_LOSE_LIFE)).play()
+                    self.lives -= 1
+                    self.startup_counter = 0
+
+                    self.player_x = c.PLAYER_X
+                    self.player_y = c.PLAYER_Y
+                    self.direction = 0
+                    self.direction_command = 0
+                    self.powerup = False
+                    self.power_count = 0
+
+                    self.eaten_bees = [False, False, False, False]
+
+                    for i in range(1,5):
+                        exec(f'self.bee{i}_x = c.BEE{i}_X')
+                        exec(f'self.bee{i}_y = c.BEE{i}_Y')
+                        exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
+                        exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
+                
+                else:
+                        self.moving = False
+                        self.game_over = True
+                        self.startup_counter = 0
+        
+            if self.powerup and self.player_hitbox.colliderect(self.bee3_rect) and self.eaten_bees[2] and not self.bee3.dead:
+                if self.lives > 0:
+                    pygame.mixer.music.stop()
+                    pygame.mixer.Sound(os.path.join(self.audiodir, c.MUSIC_LOSE_LIFE)).play()
+                    self.lives -= 1
+                    self.startup_counter = 0
+
+                    self.player_x = c.PLAYER_X
+                    self.player_y = c.PLAYER_Y
+                    self.direction = 0
+                    self.direction_command = 0
+                    self.powerup = False
+                    self.power_count = 0
+
+                    self.eaten_bees = [False, False, False, False]
+
+                    for i in range(1,5):
+                        exec(f'self.bee{i}_x = c.BEE{i}_X')
+                        exec(f'self.bee{i}_y = c.BEE{i}_Y')
+                        exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
+                        exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
+                
+                else:
+                        self.moving = False
+                        self.game_over = True
+                        self.startup_counter = 0
+        
+            if self.powerup and self.player_hitbox.colliderect(self.bee4_rect) and self.eaten_bees[3] and not self.bee4.dead:
+                if self.lives > 0:
+                    pygame.mixer.music.stop()
+                    pygame.mixer.Sound(os.path.join(self.audiodir, c.MUSIC_LOSE_LIFE)).play()
+                    self.lives -= 1
+                    self.startup_counter = 0
+
+                    self.player_x = c.PLAYER_X
+                    self.player_y = c.PLAYER_Y
+                    self.direction = 0
+                    self.direction_command = 0
+                    self.powerup = False
+                    self.power_count = 0
+
+                    self.eaten_bees = [False, False, False, False]
+
+                    for i in range(1,5):
+                        exec(f'self.bee{i}_x = c.BEE{i}_X')
+                        exec(f'self.bee{i}_y = c.BEE{i}_Y')
+                        exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
+                        exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
+                
+                else:
+                        self.moving = False
+                        self.game_over = True
+                        self.startup_counter = 0
+             
+            if self.powerup and self.player_hitbox.colliderect(self.bee1_rect) and not self.bee1.dead and not self.eaten_bees[0]:
+                self.bee1_dead = True
+                self.eaten_bees[0] = True
+                self.score += (2 ** self.eaten_bees.count(True)) * 100
+
+            if self.powerup and self.player_hitbox.colliderect(self.bee2_rect) and not self.bee2.dead and not self.eaten_bees[1]:
+                self.bee2_dead = True
+                self.eaten_bees[1] = True
+                self.score += (2 ** self.eaten_bees.count(True)) * 100
+
+            if self.powerup and self.player_hitbox.colliderect(self.bee3_rect) and not self.bee3.dead and not self.eaten_bees[2]:
+                self.bee3_dead = True
+                self.eaten_bees[2] = True
+                self.score += (2 ** self.eaten_bees.count(True)) * 100
+            
+            if self.powerup and self.player_hitbox.colliderect(self.bee4_rect) and not self.bee4.dead and not self.eaten_bees[3]:
+                self.bee4_dead = True
+                self.eaten_bees[3] = True
+                self.score += (2 ** self.eaten_bees.count(True)) * 100
+
+            
             self.events()
 
             for i in range(4):
@@ -129,8 +349,6 @@ class Game:
             elif self.player_x < -40:
                 self.player_x = (c.LARGURA - 3)
             
-            self.plot_sprites()
-    
     def events(self):
         """
         Função que define os eventos de movimento do jogador e quando sair do
@@ -141,6 +359,7 @@ class Game:
         None.
 
         """
+        
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -157,6 +376,7 @@ class Game:
                     self.direction_command = 0
                 elif event.key == pygame.K_LEFT:
                     self.direction_command = 1
+
             
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_p:
@@ -169,7 +389,6 @@ class Game:
                     self.direction_command = self.direction
                 elif event.key == pygame.K_LEFT and self.direction_command == 1:
                     self.direction_command = self.direction
-
     
     def plot_sprites(self):
         """
@@ -183,11 +402,21 @@ class Game:
         """
         self.screen.fill(c.PRETO) #limpa a tela
         self.draw_bord(self.level) #desenha o nivel
+        self.player_hitbox = pygame.draw.circle(self.screen, c.PRETO, (self.player_x + 15, self.player_y + 15), 14, 1)
         self.draw_player() #desenha o player
-        
+
         #Desenha as abelhas
         for i in range(1,5):
-            exec(f'self.bee{i}.draw_bee(self.bee{i}_x, self.bee{i}_y, self.powerup, self.counter, self.eaten_bees, self.bee{i}_dead)')
+            exec(f'self.bee{i}.draw_bee(self.bee{i}_x, self.bee{i}_y, self.powerup, self.counter, self.eaten_bees, self.bee{i}_dead, self.bee{i}_direct)')
+
+        if self.bee1.in_box and self.bee1_dead:
+            self.bee1_dead = False
+        if self.bee2.in_box and self.bee2_dead:
+            self.bee2_dead = False
+        if self.bee3.in_box and self.bee3_dead:
+            self.bee3_dead = False
+        if self.bee4.in_box and self.bee4_dead:
+            self.bee4_dead = False
 
         pygame.display.flip()
     
@@ -340,6 +569,51 @@ class Game:
                     pygame.mixer.music.stop()
                     pygame.mixer.Sound(os.path.join(self.audiodir, c.START_KEY)).play()
     
+    def wait_space(self):
+        """
+        Função auxiliar para eventos do pygame.
+
+        Returns
+        -------
+        None.
+
+        """
+        waiting = True
+        while waiting:
+            self.clock.tick(c.FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    waiting = False
+                    self.is_running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE and (self.game_over or self.game_won):
+                        
+                        self.game_over = False
+                        self.game_won = False
+                        self.startup_counter = 0
+                        self.player_x = c.PLAYER_X
+                        self.player_y = c.PLAYER_Y
+                        self.direction = 0
+                        self.direction_command = 0
+                        self.powerup = False
+                        self.power_count = 0
+
+                        self.eaten_bees = [False, False, False, False]
+
+                        for i in range(1,5):
+                            exec(f'self.bee{i}_x = c.BEE{i}_X')
+                            exec(f'self.bee{i}_y = c.BEE{i}_Y')
+                            exec(f'self.bee{i}_direct = c.BEE{i}_DIRECTION')
+                            exec(f'self.bee{i}_dead = c.BEE{i}_DEAD')
+                        
+                        self.score = 0
+                        self.lives = 3
+                        self.level = copy.deepcopy(c.BOARDS)
+                        
+                        waiting = False
+                        pygame.mixer.music.stop()
+                        pygame.mixer.Sound(os.path.join(self.audiodir, c.START_KEY)).play()
+    
     def show_game_over(self):
         """
         Função que gera a tela de game over.
@@ -349,6 +623,9 @@ class Game:
         None.
 
         """
+        pygame.mixer.music.load(os.path.join(self.audiodir, c.MUSIC_GAME_OVER))
+        pygame.mixer.music.play()
+
         self.screen.fill(c.PRETO) 
 
         self.show_text(
@@ -360,7 +637,7 @@ class Game:
         )
 
         self.show_text(
-            "Pressione qualquer tecla", 
+            "Pressione espaço para jogar de novo", 
             32, 
             c.AMARELO, 
             c.LARGURA/2, 
@@ -368,7 +645,48 @@ class Game:
         )        
 
         pygame.display.flip()
-        self.wait_command()
+        self.wait_space()
+    
+    def show_game_won(self):
+        """
+        Função que gera a tela de game over.
+
+        Returns
+        -------
+        None.
+
+        """
+        pygame.mixer.music.load(os.path.join(self.audiodir, c.MUSIC_WON))
+        pygame.mixer.music.play()
+
+        self.screen.fill(c.PRETO) 
+
+        self.show_text(
+            "Game Won", 
+            40, 
+            c.AMARELO, 
+            c.LARGURA/2, 
+            280
+        )
+
+        self.show_text(
+            f"Score: {self.score}",
+            30,
+            c.AMARELO,
+            c.LARGURA/2, 
+            320
+        )
+
+        self.show_text(
+            "Pressione espaço para jogar de novo", 
+            32, 
+            c.AMARELO, 
+            c.LARGURA/2, 
+            360
+        )        
+
+        pygame.display.flip()
+        self.wait_space()
     
     def draw_bord(self, lvl):
         """
@@ -569,10 +887,16 @@ class Game:
         if 0 < self.player_x < 464:
 
             if self.level[math.floor(centery/c.ALTURA_1)][math.floor(centerx/c.LARGURA_1)] == 1:
+                pygame.mixer.Sound(os.path.join(self.audiodir, c.MUSIC_PEANUT)).play()
                 self.level[math.floor(centery/c.ALTURA_1)][math.floor(centerx/c.LARGURA_1)] = 0
                 score += 10
 
             if self.level[math.floor(centery/c.ALTURA_1)][math.floor(centerx/c.LARGURA_1)] == 2:
+                
+                pygame.mixer.music.stop()
+                pygame.mixer.music.load(os.path.join(self.audiodir, c.MUSIC_POWERUP))
+                pygame.mixer.music.play()
+
                 self.level[math.floor(centery/c.ALTURA_1)][math.floor(centerx/c.LARGURA_1)] = 0
                 score += 50
                 self.powerup = True
@@ -602,13 +926,93 @@ class Game:
         
         for i in range(self.lives):
             self.screen.blit(pygame.transform.scale(s.PLAYER_IMAGES[0], (20, 20)), (150 + (i * 30), 526))
+        
+        if self.game_over:
+            self.is_running = False
+            self.show_game_over()
+        
+        if self.game_won:
+            self.is_running = False
+            self.show_game_won()
+
+    def get_target(self):
+        
+        if self.player_x < 240:
+            runaway_x = 480
+        else:
+            runaway_x = 0
+        
+        if self.player_y < 256:
+            runaway_y = 512
+        else:
+            runaway_y = 0
+
+        return_target = (202, 228)
+
+        if self.powerup:
+            if not self.bee1.dead:
+                bee1_target = (runaway_x, runaway_y)
+            else:
+                bee1_target = return_target
+
+            if not self.bee2.dead:
+                bee2_target = (runaway_x, self.player_y)
+            else:
+                bee2_target = return_target
+
+            if not self.bee3.dead:
+                bee3_target = (self.player_x, runaway_y)
+            else:
+                bee3_target = return_target
+
+            if not self.bee4.dead:
+                bee4_target = (240, 256)
+            else:
+                bee4_target = return_target
+        else:
+            if not self.bee1.dead:
+                if self.bee1_box:
+                    bee1_target = (c.LARGURA//2 - 15, 0)
+                else:
+                    bee1_target = (self.player_x, self.player_y)
+            else:
+                bee1_target = return_target
+
+            if not self.bee2.dead:
+                if self.bee2_box:
+                    bee2_target = (c.LARGURA//2 - 15, 0)
+                else:
+                    bee2_target = (self.player_x, self.player_y)
+            else:
+                bee2_target = return_target
+
+            if not self.bee3.dead:
+                if self.bee3_box:
+                    bee3_target = (c.LARGURA//2 - 15, 0)
+                else:
+                    bee3_target = (self.player_x, self.player_y)
+            else:
+                bee3_target = return_target
+
+            if not self.bee4.dead:
+                if self.bee4_box:
+                    bee4_target = (c.LARGURA//2 - 15, 0)
+                else:
+                    bee4_target = (self.player_x, self.player_y)
+            else:
+                bee4_target = return_target
+
+        return [bee1_target, bee2_target, bee3_target, bee4_target]
 
 g = Game()
 g.show_menu()
 
 while g.is_running:
+
     g.new_game()
-    g.show_game_over()
+
+pygame.quit()
+
 
     
 

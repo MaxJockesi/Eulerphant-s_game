@@ -48,9 +48,9 @@ class Bee:
         self.Id = Id
         self.turns = [False, False, False, False]
         self.inbox = False
-        self.rect = self.get_rect()
+        self.rect = self.get_rect(self.x_pos, self.y_pos)
         
-    def draw_bee(self, x_pos, y_pos, powerup, counter, eaten, dead):
+    def draw_bee(self, x_pos, y_pos, powerup, counter, eaten, dead, direct):
         """
         Desenha a abelha conforme a situação atual do jogo.
 
@@ -71,7 +71,8 @@ class Bee:
 
         """
 
-        self.rect = self.get_rect()
+        self.direction = direct
+        self.rect = self.get_rect(self.x_pos, self.y_pos)
         self.dead = dead
         self.x_pos = x_pos
         self.y_pos = y_pos
@@ -98,15 +99,15 @@ class Bee:
 
         else:
             if self.direction == 0:
-                self.screen.blit(pygame.transform.flip(s.ABLINHA_MORTO[counter//10],True, False), (self.x_pos, self.y_pos))
+                self.screen.blit(pygame.transform.flip(s.ABLINHA_MORTO ,True, False), (self.x_pos, self.y_pos))
             elif self.direction == 1:
-                self.screen.blit(s.ABLINHA_MORTO[counter // 10], (self.x_pos, self.y_pos))
+                self.screen.blit(s.ABLINHA_MORTO, (self.x_pos, self.y_pos))
             elif self.direction == 2:
-                self.screen.blit(pygame.transform.rotate(s.ABLINHA_MORTO[counter // 10], 270), (self.x_pos, self.y_pos))
+                self.screen.blit(pygame.transform.rotate(s.ABLINHA_MORTO, 270), (self.x_pos, self.y_pos))
             elif self.direction == 3:
-                self.screen.blit(pygame.transform.rotate(s.ABLINHA_MORTO[counter // 10], 90), (self.x_pos, self.y_pos))    
+                self.screen.blit(pygame.transform.rotate(s.ABLINHA_MORTO, 90), (self.x_pos, self.y_pos))    
     
-    def get_rect(self):
+    def get_rect(self, x_pos, y_pos):
         """
         Atualizador de local de colisão com a abelha.
 
@@ -117,11 +118,11 @@ class Bee:
 
         """
         
-        bee_rect = pygame.rect.Rect((self.center_x - 12, self.center_y - 12), (24, 24))
+        bee_rect = pygame.rect.Rect(((x_pos + 15) - 12, (y_pos + 15) - 12), (24, 24))
 
         return bee_rect
 
-    def check_collisions(self, level):
+    def check_collisions(self, level, bee_x, bee_y, speed):
         """
         Checa por onde a abelha pode andar.
 
@@ -135,109 +136,81 @@ class Bee:
         num2 = c.LARGURA_1
         num3 = c.NORMALIZACAO
 
+        self.speed = speed
+        self.x_pos = bee_x
+        self.y_pos = bee_y
+
+        center_x = self.x_pos + 15
+        center_y = self.y_pos + 15
+
         self.turns = [False, False, False, False]
-        
-        y_1 = math.floor(self.center_y / num1)
-        y_1_plus = math.floor((self.center_y + num1) / num1)
-        y_1_minus = math.floor((self.center_y - num1) / num1)
-        y_3_plus = math.floor((self.center_y + num3) / num1)
-        y_3_minus = math.floor((self.center_y - num3) / num1)
-        
-        x_1 = math.floor(self.center_x / num2)
-        x_2_plus = math.floor((self.center_x + num2) / num2)
-        x_2_minus = math.floor((self.center_x - num2) / num2)
-        x_3_plus = math.floor((self.center_x + num3) / num2)
-        x_3_minus = math.floor((self.center_x - num3) / num2)
-
-        if self.center_x // 30 < 15:
-            if level[y_1][x_3_minus] < 3 \
-                or level[y_1][x_3_minus] == 9 and (
-                self.in_box or self.dead):
-
-                self.turns[1] = True
-
-            if level[y_1][x_3_plus] < 3 \
-                or level[y_1][x_3_plus] == 9 and (
-                self.in_box or self.dead):
-
-                self.turns[0] = True
-
-            if level[y_3_plus][x_1] < 3 \
-                or level[y_3_plus][x_1] == 9 and (
-                self.in_box or self.dead):
-
-                self.turns[3] = True
-
-            if level[y_3_minus][x_1] < 3 \
-                or level[y_3_minus][x_1] == 9 and (
-                self.in_box or self.dead):
-
+        if 0 < center_x // 30 < 15:
+            if level[(center_y - num3) // num1][center_x // num2] == 9:
                 self.turns[2] = True
-            
+            if level[center_y // num1][(center_x - num3) // num2] < 3 \
+                    or (level[center_y // num1][(center_x - num3) // num2] == 9 and (
+                    self.in_box or self.dead)):
+                self.turns[1] = True
+            if level[center_y // num1][(center_x + num3) // num2] < 3 \
+                    or (level[center_y // num1][(center_x + num3) // num2] == 9 and (
+                    self.in_box or self.dead)):
+                self.turns[0] = True
+            if level[(center_y + num3) // num1][center_x // num2] < 3 \
+                    or (level[(center_y + num3) // num1][center_x // num2] == 9 and (
+                    self.in_box or self.dead)):
+                self.turns[3] = True
+            if level[(center_y - num3) // num1][center_x // num2] < 3 \
+                    or (level[(center_y - num3) // num1][center_x // num2] == 9 and (
+                    self.in_box or self.dead)):
+                self.turns[2] = True
+
             if self.direction == 2 or self.direction == 3:
-                if 7 <= self.center_x % num2 <= 10:
-                    if level[y_3_plus][x_1] < 3 \
-                        or level[y_3_plus][x_1] == 9 and (
-                            self.in_box or self.dead):
-                    
+                if 8 <= center_x % num2 <= 9:
+                    if level[(center_y + num3) // num1][center_x // num2] < 3 \
+                            or (level[(center_y + num3) // num1][center_x // num2] == 9 and (
+                            self.in_box or self.dead)):
                         self.turns[3] = True
-
-                    if level[y_3_minus][x_1] < 3 \
-                        or level[y_3_minus][x_1] == 9 and (
-                            self.in_box or self.dead):
-                    
+                    if level[(center_y - num3) // num1][center_x // num2] < 3 \
+                            or (level[(center_y - num3) // num1][center_x // num2] == 9 and (
+                            self.in_box or self.dead)):
                         self.turns[2] = True
-                
-                if 7 <= self.center_y % num1 <= 10:
-                    if level[y_1][x_2_minus] < 3 \
-                        or level[y_1][x_2_minus] == 9 and (
-                            self.in_box or self.dead):
-                    
+                if 8 <= center_y % num1 <= 9:
+                    if level[center_y // num1][(center_x - num2) // num2] < 3 \
+                            or (level[center_y // num1][(center_x - num2) // num2] == 9 and (
+                            self.in_box or self.dead)):
                         self.turns[1] = True
-
-                    if level[y_1][x_2_plus] < 3 \
-                        or level[y_1][x_2_plus] == 9 and (
-                            self.in_box or self.dead):
-                    
+                    if level[center_y // num1][(center_x + num2) // num2] < 3 \
+                            or (level[center_y // num1][(center_x + num2) // num2] == 9 and (
+                            self.in_box or self.dead)):
                         self.turns[0] = True
-                
-            if self.direction == 1 or self.direction == 0:
-                if 7 <= self.center_x % num2 <= 10:
-                    if level[y_1_plus][x_1] < 3 \
-                        or level[y_1_plus][x_1] == 9 and (
-                            self.in_box or self.dead):
-                    
+
+            if self.direction == 0 or self.direction == 1:
+                if 8 <= center_x % num2 <= 9:
+                    if level[(center_y + num3) // num1][center_x // num2] < 3 \
+                            or (level[(center_y + num3) // num1][center_x // num2] == 9 and (
+                            self.in_box or self.dead)):
                         self.turns[3] = True
-
-                    if level[y_1_minus][x_1] < 3 \
-                        or level[y_1_minus][x_1] == 9 and (
-                            self.in_box or self.dead):
-                    
+                    if level[(center_y - num3) // num1][center_x // num2] < 3 \
+                            or (level[(center_y - num3) // num1][center_x // num2] == 9 and (
+                            self.in_box or self.dead)):
                         self.turns[2] = True
-                
-                if 7 <= self.center_y % num1 <= 10:
-                    if level[y_1][x_3_minus] < 3 \
-                        or level[y_1][x_3_minus] == 9 and (
-                            self.in_box or self.dead):
-                    
+                if 8 <= center_y % num1 <= 9:
+                    if level[center_y // num1][(center_x - num3) // num2] < 3 \
+                            or (level[center_y // num1][(center_x - num3) // num2] == 9 and (
+                            self.in_box or self.dead)):
                         self.turns[1] = True
-
-                    if level[y_1][x_3_plus] < 3 \
-                        or level[y_1][x_3_plus] == 9 and (
-                            self.in_box or self.dead):
-                        
+                    if level[center_y // num1][(center_x + num3) // num2] < 3 \
+                            or (level[center_y // num1][(center_x + num3) // num2] == 9 and (
+                            self.in_box or self.dead)):
                         self.turns[0] = True
-        
         else:
-
             self.turns[0] = True
             self.turns[1] = True
-
-        if 186 < self.x_pos < 294 and 218 < self.center_y < 278:
+        if 176 < self.x_pos < 280 and 208 < self.y_pos < 264:
             self.in_box = True
         else:
             self.in_box = False
-        
+
         return self.turns, self.in_box
 
     def move_1(self, target, turns):
@@ -372,14 +345,11 @@ class Bee:
                     self.x_pos -= self.speed
                 else:
                     self.y_pos += self.speed
-
-        if self.x_pos > c.LARGURA:
-            self.x_pos = -40
-        elif self.x_pos < -40:
-            self.x_pos = (c.LARGURA - 3)
-
+        if self.x_pos < -30:
+            self.x_pos = c.LARGURA
+        elif self.x_pos > c.LARGURA: 
+            self.x_pos = -30
         return self.x_pos, self.y_pos, self.direction
-        
 
     def move_2(self, target, turns):
         # r, l, u, d
@@ -480,17 +450,14 @@ class Bee:
                     self.x_pos -= self.speed
             elif turns[3]:
                 self.y_pos += self.speed
-
-        if self.x_pos > c.LARGURA:
-            self.x_pos = -40
-        elif self.x_pos < -40:
-            self.x_pos = (c.LARGURA - 3)
-
+        if self.x_pos < -30:
+            self.x_pos = c.LARGURA
+        elif self.x_pos > c.LARGURA:
+            self.x_pos = -30
         return self.x_pos, self.y_pos, self.direction
 
     def move_3(self, target, turns):
         # r, l, u, d
-        # inky turns up or down at any point to pursue, but left and right only on collision
         if self.direction == 0:
             if target[0] > self.x_pos and turns[0]:
                 self.x_pos += self.speed
@@ -604,12 +571,10 @@ class Bee:
                     self.x_pos += self.speed
             elif turns[3]:
                 self.y_pos += self.speed
-
-        if self.x_pos > c.LARGURA:
-            self.x_pos = -40
-        elif self.x_pos < -40:
-            self.x_pos = (c.LARGURA - 3)
-
+        if self.x_pos < -30:
+            self.x_pos = c.LARGURA
+        elif self.x_pos > c.LARGURA:
+            self.x_pos = -30
         return self.x_pos, self.y_pos, self.direction
 
     def move_4(self, target, turns):
@@ -730,10 +695,8 @@ class Bee:
                     self.x_pos -= self.speed
                 else:
                     self.y_pos += self.speed
-
-        if self.x_pos > c.LARGURA:
-            self.x_pos = -40
-        elif self.x_pos < -40:
-            self.x_pos = (c.LARGURA - 3)
-
+        if self.x_pos < -30:
+            self.x_pos = c.LARGURA
+        elif self.x_pos > c.LARGURA:
+            self.x_pos = -30
         return self.x_pos, self.y_pos, self.direction

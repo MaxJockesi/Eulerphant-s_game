@@ -16,18 +16,25 @@ DIRECTION = 0
 PLAYER_SPEED = 2
 
 #AB'
-for i in range (1,5):
-    exec(f'BEE{i}_X = LARGURA//2 - 15 ')
-    exec(f'BEE{i}_Y = 218')
-    exec(f'BEE{i}_DIRECTION = 2')
-    exec(f'BEE{i}_DEAD = False')
-    
+
+BEE1_X = LARGURA//2 - 15
 BEE1_Y = 186
 BEE1_DIRECTION = 0
 BEE1_DEAD = False
 
-BEE4_Y = 248
-BEE4_DIRECTION = 0
+BEE2_X = LARGURA//2 - 15
+BEE2_Y = 218
+BEE2_DIRECTION = 2
+BEE2_DEAD = False
+
+BEE3_X = LARGURA//2 - 15
+BEE3_Y = 218
+BEE3_DIRECTION = 2
+BEE3_DEAD = False
+
+BEE4_X = LARGURA//2 - 15
+BEE4_Y = 218
+BEE4_DIRECTION = 2
 BEE4_DEAD = False
 
 
@@ -53,7 +60,13 @@ LOGO = "pacman-logo-1.png"
 
 #audios
 MUSIC_START = "intermission.wav"
+MUSIC_GAME_OVER = "mixkit-gameover.wav"
+MUSIC_POWERUP = "mixkit-powerup.wav"
+MUSIC_LOSE_LIFE = "mixkit-playerloselife.wav"
+MUSIC_PEANUT = "mixkit-peanut.wav"
+MUSIC_WON = "mixkit-levelcomplet.wav"
 START_KEY = "munch_1.wav"
+
 
 #fonte
 FONTE = "arial"
